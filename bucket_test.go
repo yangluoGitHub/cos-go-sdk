@@ -24,37 +24,39 @@ var folderPath = func() string {
 	return fmt.Sprintf("%s_%d", "/cos-go-sdk/createFolder/folder", now)
 }()
 
-var srcPath string = "./test/pic/test.jpg"
+var srcPath string = "./test/test.jpg"
 var dstPath = func() string {
 	now := GetNowSec()
 	return fmt.Sprintf("%s_%d.jpg", "/cos-go-sdk/Upload/test", now)
 }()
 
-var slice_srcPath string = "/Users/renxiaoqing/Downloads/apache-activemq-5.12.1-bin.tar.gz"
-var slice_dstPath string = "/cos-go-sdk/upload_slice/test001_apache-activemq-5.12.1-bin.tar.gz"
+var slice_srcPath string = "./test/data.bin"
+var slice_dstPath string = "/cos-go-sdk/upload_slice/data.bin"
 
 // var slice_srcPath string = "/Users/renxiaoqing/Downloads/9.18OK.7z"
 // var slice_dstPath string = "/cos-go-sdk/upload_slice/test001_9.18OK.7z"
 
 func TestCreateFolder(t *testing.T) {
-	_, err := bucket.CreateFolder(folderPath, "")
+	response, err := bucket.CreateFolder(folderPath, "")
 	if err != nil {
 		t.Errorf("cos createFolder path=%s, failed, err=%s\n", folderPath, err.Error())
 	} else {
 		fmt.Printf("cos createFolder path=%s success\n", folderPath)
 	}
+	fmt.Println(response)
 
 }
 
 func TestUpdateFolder(t *testing.T) {
 
 	bizAttr := "update"
-	_, err := bucket.UpdateFolder(folderPath, bizAttr)
+	response, err := bucket.UpdateFolder(folderPath, bizAttr)
 	if err != nil {
 		t.Errorf("cos updateFolder path=%s, failed, err=%s\n", folderPath, err.Error())
 	} else {
 		fmt.Printf("cos updateFolder path=%s success\n", folderPath)
 	}
+	fmt.Println(response)
 }
 
 func TestStatFolder(t *testing.T) {
@@ -120,12 +122,13 @@ func TestStat(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	_, err := bucket.Update(dstPath, "update")
+	json, err := bucket.Update(dstPath, "update")
 	if err != nil {
 		t.Errorf("cos update file=%s, failed, err=%s\n", dstPath, err.Error())
 	} else {
 		fmt.Printf("cos update file=%s success\n", dstPath)
 	}
+	fmt.Println(json)
 }
 
 func TestDel(t *testing.T) {
@@ -145,6 +148,16 @@ func TestUpload_slice(t *testing.T) {
 		t.Errorf("cos upload_slice file=%s, failed, err = %s\n", slice_srcPath, err.Error())
 	} else {
 		fmt.Printf("cos Upload_slice file=%s dstPath=%s success", slice_srcPath, slice_dstPath)
+	}
+	fmt.Println(json)
+}
+
+func TestDel2(t *testing.T) {
+	json, err := bucket.Del(slice_dstPath)
+	if err != nil {
+		t.Errorf("cos del file=%s, failed, err=%s\n", slice_dstPath, err.Error())
+	} else {
+		fmt.Println("cos del file=%s success", slice_dstPath)
 	}
 	fmt.Println(json)
 }

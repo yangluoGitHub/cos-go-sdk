@@ -21,8 +21,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/bitly/go-simplejson"
-	"qcloud/cos-go-sdk/sign"
+	"github.com/yangluoGitHub/cos-go-sdk/sign"
 )
 
 const (
@@ -34,8 +33,6 @@ const (
 	ELISTBOTH     = "eListBoth"
 	ELISTDIRONLY  = "eListDirOnly"
 	ELISTFILEONLY = "eListFileOnly"
-
-	COSAPI_ILLEGAL_SLICE_SIZE_ERROR = -4
 )
 
 type Bucket struct {
@@ -46,6 +43,111 @@ type Bucket struct {
 type Client struct {
 	Config *Config
 	Conn   *Conn
+}
+
+// COS API 返回结果封装
+type Response struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+}
+
+// 目录创建操作的返回结果封装
+type CreateFolderResponse struct {
+	Response
+	Data struct {
+		Ctime        string `json:"ctime"`
+		ResourcePath string `json:"resource_path"`
+	} `json:"data"`
+}
+
+// 目录更新操作的返回结果封装
+type UpdateFolderResponse struct {
+	Response
+}
+
+// 目录查询操作的返回结果封装
+type StatFolderResponse struct {
+	Response
+	Data struct {
+		Name    string `json:"name"`
+		BizAttr string `json:"biz_attr"`
+		Ctime   string `json:"ctime"`
+		Mtime   string `json:"mtime"`
+	} `json:"data"`
+}
+
+// 目录删除操作的返回结果封装
+type DeleteFolderResponse struct {
+	Response
+}
+
+// 目录列举及搜索操作的返回结果封装
+type ListFolderResponse struct {
+	Response
+	Data struct {
+		Context   string `json:"context"`
+		HasMore   bool   `json:"has_more"`
+		DirCount  int    `json:"dircount"`
+		FileCount int    `json:"filecount"`
+		Infos     []struct {
+			Name      string `json:"name"`
+			BizAttr   string `json:"biz_attr"`
+			FileSize  int64  `json:"filesize"`
+			FileLen   int64  `json:"filelen"`
+			Sha       string `json:"sha"`
+			Ctime     string `json:"ctime"`
+			Mtime     string `json:"mtime"`
+			AccessUrl string `json:"access_url"`
+		} `json:"infos"`
+	} `json:"data"`
+}
+
+// 文件上传操作的返回结果封装
+type UploadFileResponse struct {
+	Response
+	Data struct {
+		AccessUrl    string `json:"access_url"`
+		Url          string `json:"url"`
+		ResourcePath string `json:"resource_path"`
+	} `json:"data"`
+}
+
+// 文件分片上传操作的返回结果封装
+type UploadSliceResponse struct {
+	Response
+	Data struct {
+		Session      string `json:"session"`
+		Offset       int64  `json:"offset"`
+		SliceSize    int    `json:"slice_size"`
+		AccessUrl    string `json:"access_url"`
+		Url          string `json:"url"`
+		ResourcePath string `json:"resource_path"`
+	} `json:"data"`
+}
+
+// 文件属性更新操作的返回结果封装
+type UpdateFileResponse struct {
+	Response
+}
+
+// 文件查询操作的返回结果封装
+type StatFileResponse struct {
+	Response
+	Data struct {
+		Name      string `json:"name"`
+		BizAttr   string `json:"biz_attr"`
+		FileSize  string `json:"filesize"`
+		FileLen   string `json:"filelen"`
+		Sha       string `json:"sha"`
+		Ctime     string `json:"ctime"`
+		Mtime     string `json:"mtime"`
+		AccessUrl string `json:"access_url"`
+	} `json:"data"`
+}
+
+// 文件删除操作的返回结果封装
+type DeleteFileResponse struct {
+	Response
 }
 
 /*
@@ -221,32 +323,6 @@ func getFileSliceCntents(srcPath string, offset int64, sliceSize int) ([]byte, e
 	return buf[:n], nil
 }
 
-//解析response
-//return json数据
-func (buc Bucket) parseRsp(rsp []byte) (js *simplejson.Json, err error) {
-	//fmt.Printf("http rsp : %s\r\n", string(rsp))
-	js, err = simplejson.NewJson(rsp)
-	if nil != err {
-		return
-	}
-	code, err := js.Get("code").Int()
-	if nil != err {
-		return
-	}
-	message, err := js.Get("message").String()
-	if nil != err {
-		return
-	}
-
-	if code != 0 {
-		desc := fmt.Sprintf("rsp error, code=%d, message=%s", code, message)
-		err = errors.New(desc)
-		return
-	}
-
-	return
-}
-
 //post 请求数据json编码，返回请求body， headers
 func jsonReqData(reqData map[string]string) (io.Reader, map[string]string, error) {
 	d, err := json.Marshal(reqData)
@@ -300,7 +376,8 @@ func multipartReqData(reqData map[string]string, filecontent []byte, boundary st
 	@param string path     目录路径，sdk会补齐末尾的 '/'
 	@param string bizAttr  目录属性
 */
-func (buc Bucket) CreateFolder(path, bizAttr string) (js *simplejson.Json, err error) {
+func (buc Bucket) CreateFolder(path, bizAttr string) (*CreateFolderResponse, error) {
+	response := &CreateFolderResponse{}
 
 	path = formatFolderPath(path)
 
@@ -311,15 +388,19 @@ func (buc Bucket) CreateFolder(path, bizAttr string) (js *simplejson.Json, err e
 
 	body, headers, err := jsonReqData(reqData)
 	if nil != err {
-		return
+		return nil, err
 	}
 
 	data, err := buc.do("POST", path, nil, headers, body, SIGN)
 	if nil != err {
-		return
+		return nil, err
 	}
 
-	return buc.parseRsp(data)
+	err = json.Unmarshal(data, response)
+	if nil != err {
+		return nil, err
+	}
+	return response, nil
 
 }
 
@@ -373,9 +454,20 @@ func (buc Bucket) do(method, path string, params Params,
 	@param string path     目录路径，sdk会补齐末尾的 '/'
 	@param string bizAttr  更新信息
 */
-func (buc Bucket) UpdateFolder(path, bizAttr string) (js *simplejson.Json, err error) {
+func (buc Bucket) UpdateFolder(path, bizAttr string) (*UpdateFolderResponse, error) {
+
+	response := &UpdateFolderResponse{}
 	path = formatFolderPath(path)
-	return buc.updateBase(path, bizAttr)
+	data, err := buc.updateBase(path, bizAttr)
+	if nil != err {
+		return nil, err
+	}
+
+	err = json.Unmarshal(data, response)
+	if nil != err {
+		return nil, err
+	}
+	return response, nil
 }
 
 /*
@@ -383,13 +475,23 @@ func (buc Bucket) UpdateFolder(path, bizAttr string) (js *simplejson.Json, err e
 	@param string path     文件路径
 	@param string bizAttr  更新信息
 */
-func (buc Bucket) Update(path, bizAttr string) (js *simplejson.Json, err error) {
+func (buc Bucket) Update(path, bizAttr string) (*UpdateFileResponse, error) {
+	response := &UpdateFileResponse{}
 	path = formatFilePath(path)
-	return buc.updateBase(path, bizAttr)
+	data, err := buc.updateBase(path, bizAttr)
+	if nil != err {
+		return nil, err
+	}
+
+	err = json.Unmarshal(data, response)
+	if nil != err {
+		return nil, err
+	}
+	return response, nil
 }
 
 //Private
-func (buc Bucket) updateBase(path, bizAttr string) (js *simplejson.Json, err error) {
+func (buc Bucket) updateBase(path, bizAttr string) ([]byte, error) {
 
 	reqData := map[string]string{
 		"op":       "update",
@@ -398,60 +500,81 @@ func (buc Bucket) updateBase(path, bizAttr string) (js *simplejson.Json, err err
 
 	body, headers, err := jsonReqData(reqData)
 	if nil != err {
-		return
+		return nil, err
 	}
 
-	data, err := buc.do("POST", path, nil, headers, body, SIGN_ONCE)
-	if nil != err {
-		return
-	}
-
-	return buc.parseRsp(data)
+	return buc.do("POST", path, nil, headers, body, SIGN_ONCE)
 }
 
 /*
 	目录信息 查询
 	@param string  path  目录路径
 */
-func (buc Bucket) StatFolder(path string) (js *simplejson.Json, err error) {
+func (buc Bucket) StatFolder(path string) (*StatFolderResponse, error) {
+	response := &StatFolderResponse{}
 
 	path = formatFolderPath(path)
-	return buc.statBase(path)
+	data, err := buc.statBase(path)
+	if nil != err {
+		return nil, err
+	}
+
+	err = json.Unmarshal(data, response)
+	if nil != err {
+		return nil, err
+	}
+	return response, nil
 }
 
 /*
 	文件信息 查询
 	@param string  path 文件路径
 */
-func (buc Bucket) Stat(path string) (js *simplejson.Json, err error) {
+func (buc Bucket) Stat(path string) (*StatFileResponse, error) {
+	response := &StatFileResponse{}
 
 	path = formatFilePath(path)
-	return buc.statBase(path)
+	data, err := buc.statBase(path)
+	if nil != err {
+		return nil, err
+	}
+
+	err = json.Unmarshal(data, response)
+	if nil != err {
+		return nil, err
+	}
+	return response, nil
 }
 
 //Private
-func (buc Bucket) statBase(path string) (js *simplejson.Json, err error) {
+func (buc Bucket) statBase(path string) ([]byte, error) {
 
 	params := Params{
 		"op": "stat",
 	}
 
-	data, err := buc.do("GET", path, params, nil, nil, SIGN)
-	if nil != err {
-		return
-	}
+	return buc.do("GET", path, params, nil, nil, SIGN)
 
-	return buc.parseRsp(data)
 }
 
 /*
 	删除目录
 	@param string path  目录路径
 */
-func (buc Bucket) DelFolder(path string) (js *simplejson.Json, err error) {
+func (buc Bucket) DelFolder(path string) (*DeleteFolderResponse, error) {
 
+	response := &DeleteFolderResponse{}
 	path = formatFolderPath(path)
-	return buc.delBase(path)
+	data, err := buc.delBase(path)
+	if nil != err {
+		return nil, err
+	}
+
+	err = json.Unmarshal(data, response)
+	if nil != err {
+		return nil, err
+	}
+	return response, nil
 
 }
 
@@ -459,15 +582,25 @@ func (buc Bucket) DelFolder(path string) (js *simplejson.Json, err error) {
 	删除文件
 	@param string path  文件路径
 */
-func (buc Bucket) Del(path string) (js *simplejson.Json, err error) {
+func (buc Bucket) Del(path string) (*DeleteFileResponse, error) {
 
+	response := &DeleteFileResponse{}
 	path = formatFilePath(path)
-	return buc.delBase(path)
+	data, err := buc.delBase(path)
+	if nil != err {
+		return nil, err
+	}
+
+	err = json.Unmarshal(data, response)
+	if nil != err {
+		return nil, err
+	}
+	return response, nil
 
 }
 
 //Private
-func (buc Bucket) delBase(path string) (js *simplejson.Json, err error) {
+func (buc Bucket) delBase(path string) ([]byte, error) {
 
 	reqData := map[string]string{
 		"op": "delete",
@@ -475,15 +608,11 @@ func (buc Bucket) delBase(path string) (js *simplejson.Json, err error) {
 
 	body, headers, err := jsonReqData(reqData)
 	if nil != err {
-		return
+		return nil, err
 	}
 
-	data, err := buc.do("POST", path, nil, headers, body, SIGN_ONCE)
-	if nil != err {
-		return
-	}
+	return buc.do("POST", path, nil, headers, body, SIGN_ONCE)
 
-	return buc.parseRsp(data)
 }
 
 /*
@@ -495,7 +624,7 @@ func (buc Bucket) delBase(path string) (js *simplejson.Json, err error) {
     @param  string  context     透传字段，查看第一页，则传空字符串。若需要翻页，需要将前一页返回值中的context透传到参数中。order用于指定翻页顺序。若order填0，则从当前页正序/往下翻页；若order填1，则从当前页倒序/往上翻页
 */
 func (buc Bucket) ListFolder(path string, num int,
-	pattern string, order int, context string) (*simplejson.Json, error) {
+	pattern string, order int, context string) (*ListFolderResponse, error) {
 
 	path = formatFolderPath(path)
 	return buc.listBase(path, num, pattern, order, context)
@@ -510,7 +639,7 @@ func (buc Bucket) ListFolder(path string, num int,
     @param  string  context     透传字段，查看第一页，则传空字符串。若需要翻页，需要将前一页返回值中的context透传到参数中。order用于指定翻页顺序。若order填0，则从当前页正序/往下翻页；若order填1，则从当前页倒序/往上翻页
 */
 func (buc Bucket) PrefixSearch(prefix string, num int,
-	pattern string, order int, context string) (*simplejson.Json, error) {
+	pattern string, order int, context string) (*ListFolderResponse, error) {
 
 	if match, _ := regexp.MatchString(`^\/`, prefix); !match {
 		prefix = "/" + prefix
@@ -520,8 +649,9 @@ func (buc Bucket) PrefixSearch(prefix string, num int,
 
 //Private
 func (buc Bucket) listBase(path string, num int,
-	pattern string, order int, context string) (js *simplejson.Json, err error) {
+	pattern string, order int, context string) (*ListFolderResponse, error) {
 
+	response := &ListFolderResponse{}
 	params := Params{
 		"op":      "list",
 		"num":     strconv.Itoa(num),
@@ -532,10 +662,14 @@ func (buc Bucket) listBase(path string, num int,
 
 	data, err := buc.do("GET", path, params, nil, nil, SIGN)
 	if nil != err {
-		return
+		return nil, err
 	}
 
-	return buc.parseRsp(data)
+	err = json.Unmarshal(data, response)
+	if nil != err {
+		return nil, err
+	}
+	return response, nil
 }
 
 /*
@@ -544,13 +678,14 @@ func (buc Bucket) listBase(path string, num int,
     @param  string  dstPath      上传的文件路径
     @param  string  bizAttr      文件属性
 */
-func (buc Bucket) Upload(srcPath, dstPath, bizAttr string) (js *simplejson.Json, err error) {
+func (buc Bucket) Upload(srcPath, dstPath, bizAttr string) (*UploadFileResponse, error) {
 
+	response := &UploadFileResponse{}
 	//file sha1
 	sha, err := getFileSha1(srcPath)
 	if nil != err {
 		fmt.Printf("getFileSha1 error, err=%s", err.Error())
-		return
+		return nil, err
 	}
 
 	reqData := map[string]string{
@@ -563,20 +698,24 @@ func (buc Bucket) Upload(srcPath, dstPath, bizAttr string) (js *simplejson.Json,
 
 	filecontent, err := getFileContents(srcPath)
 	if nil != err {
-		return
+		return nil, err
 	}
 
 	body, headers, err := multipartReqData(reqData, filecontent, boundary)
 	if nil != err {
-		return
+		return nil, err
 	}
 
 	data, err := buc.do("POST", dstPath, nil, headers, body, SIGN)
 	if nil != err {
-		return
+		return nil, err
 	}
 
-	return buc.parseRsp(data)
+	err = json.Unmarshal(data, response)
+	if nil != err {
+		return nil, err
+	}
+	return response, nil
 }
 
 /*
@@ -587,24 +726,23 @@ func (buc Bucket) Upload(srcPath, dstPath, bizAttr string) (js *simplejson.Json,
     @param  int  	sliceSize    分片大小，字节数。比如100 * 1024为每片100KB。
     @param  string  session      文件传输过程的id
 */
-func (buc Bucket) Upload_slice(srcPath, dstPath, bizAttr string, sliceSize int, session string) (js *simplejson.Json, err error) {
+func (buc Bucket) Upload_slice(srcPath, dstPath, bizAttr string, sliceSize int, session string) (*UploadSliceResponse, error) {
+
+	response := &UploadSliceResponse{}
 
 	filemode, err := os.Stat(srcPath)
 	if nil != err {
 		fmt.Println("os.Stat error", err)
+		return nil, err
 	}
 
 	fileSize := filemode.Size()
-
-	if fileSize < buc.Client.Config.MinSliceFileSize {
-		return buc.Upload(srcPath, dstPath, bizAttr)
-	}
 
 	//file sha1
 	sha1, err := getFileSha1(srcPath)
 	if nil != err {
 		fmt.Printf("getFileSha1 error, err=%s", err.Error())
-		return
+		return nil, err
 	}
 
 	reqData := map[string]string{
@@ -632,36 +770,37 @@ func (buc Bucket) Upload_slice(srcPath, dstPath, bizAttr string, sliceSize int, 
 
 	body, headers, err := multipartReqData(reqData, nil, boundary)
 	if nil != err {
-		return
+		return nil, err
 	}
 
 	data, err := buc.do("POST", dstPath, nil, headers, body, SIGN)
 	if nil != err {
-		return
+		return nil, err
 	}
 
-	js, err = buc.parseRsp(data)
+	err = json.Unmarshal(data, response)
 	if nil != err {
-		return
+		return nil, err
 	}
 
-	_, err = js.Get("data").Get("access_url").String()
-	if nil == err { //秒传命中，直接返回了url
-		return
+	if response.Code != 0 {
+		return nil, fmt.Errorf("%s", response.Message)
 	}
 
-	sliceSize, _ = js.Get("data").Get("slice_size").Int()
-	// fmt.Pribucketntf("1111111111sliceSize ==%d\n", sliceSize)
-	if sliceSize > buc.Client.Config.DefaultSliceSize || sliceSize <= 0 {
-		js.Set("code", COSAPI_ILLEGAL_SLICE_SIZE_ERROR)
-		js.Set("message", "illegal slice size")
-		return
+	if len(response.Data.Url) != 0 { // 秒传命中
+		return response, nil
 	}
 
-	session, _ = js.Get("data").Get("session").String()
-	offset, _ := js.Get("data").Get("offset").Int64()
-
-	fmt.Println(js)
+	var offset int64
+	if response.Data.SliceSize != 0 {
+		sliceSize = response.Data.SliceSize
+	}
+	if response.Data.Offset != 0 {
+		offset = response.Data.Offset
+	}
+	if response.Data.Session != "" {
+		session = response.Data.Session
+	}
 
 	return buc.upload_data(fileSize, sliceSize, dstPath, srcPath, offset, session)
 
@@ -669,23 +808,24 @@ func (buc Bucket) Upload_slice(srcPath, dstPath, bizAttr string, sliceSize int, 
 
 //Private
 func (buc Bucket) upload_data(fileSize int64, sliceSize int, dstPath, srcPath string,
-	offset int64, session string) (js *simplejson.Json, err error) {
+	offset int64, session string) (*UploadSliceResponse, error) {
+
+	response := &UploadSliceResponse{}
 
 	boundary := "-------------------------abcdefg1234567"
 	var retry_times uint = 0
 	for fileSize > offset {
 
-		fmt.Printf("offset:%d \n", offset)
+		// fmt.Printf("offset:%d \n", offset)
 
 		if (offset + int64(sliceSize)) > fileSize {
 			sliceSize = int(fileSize - offset)
 		}
 
-		filecontent, err1 := getFileSliceCntents(srcPath, offset, sliceSize)
-		if nil != err1 {
-			fmt.Printf("[upload_data]:getFileSliceCntents error, err=%s", err1.Error())
-			err = err1
-			return
+		filecontent, err := getFileSliceCntents(srcPath, offset, sliceSize)
+		if nil != err {
+			fmt.Printf("[upload_data]:getFileSliceCntents error, err=%s", err.Error())
+			return nil, err
 		}
 
 		//file sha1
@@ -703,44 +843,55 @@ func (buc Bucket) upload_data(fileSize int64, sliceSize int, dstPath, srcPath st
 			"offset":  strconv.Itoa(int(offset)),
 		}
 
-		body, headers, err1 := multipartReqData(reqData, filecontent, boundary)
-		if nil != err1 {
-			err = err1
-			return
+		body, headers, err := multipartReqData(reqData, filecontent, boundary)
+		if nil != err {
+			return nil, err
 		}
 
-		data, err1 := buc.do("POST", dstPath, nil, headers, body, SIGN)
+		data, err := buc.do("POST", dstPath, nil, headers, body, SIGN)
 
-		if nil != err1 {
-			fmt.Printf("=========err= %s ================", err1.Error())
-			err = err1
+		if nil != err {
+			fmt.Printf("=========err= %s ================", err.Error())
 			if retry_times < buc.Client.Config.RetryTimes {
 				retry_times++
 				fmt.Println(retry_times)
 				continue
 
 			} else {
-				return
+				return nil, err
 			}
 
 		}
-		js, err = buc.parseRsp(data)
+
+		err = json.Unmarshal(data, response)
 		if nil != err {
+			fmt.Printf("========Unmarshal err= %s ================", err.Error())
+			if retry_times < buc.Client.Config.RetryTimes {
+				retry_times++
+				fmt.Println(retry_times)
+				continue
+
+			} else {
+				return nil, err
+			}
+		}
+		if response.Code != 0 {
+			fmt.Printf("=========response.Code= %d ================", response.Code)
 			if retry_times < buc.Client.Config.RetryTimes {
 				retry_times++
 				continue
 			} else {
-				return
+				return nil, fmt.Errorf("%s", response.Message)
 			}
 
 		}
 
-		session, _ = js.Get("data").Get("session").String()
+		session = response.Data.Session
 		offset += int64(sliceSize)
 		retry_times = 0
 	}
 
-	return
+	return response, nil
 }
 
 // 多次有效签名

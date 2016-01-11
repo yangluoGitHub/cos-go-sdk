@@ -18,7 +18,6 @@ type Config struct {
 	SignExpiredSeconds uint           // 多次有效签名过期秒数
 	RetryTimes         uint           // 失败重试次数，默认3
 	UserAgent          string         // SDK名称/版本/系统信息
-	MinSliceFileSize   int64          // 最小分片上传文件大小，默认8MB
 	DefaultSliceSize   int            // 默认分片大小，3MB
 	Timeout            time.Duration  // 超时时间，默认60s
 	Pool               *x509.CertPool // https CA证书 默认为nil
@@ -35,7 +34,6 @@ func getDefaultCosConfig() *Config {
 	config.SignExpiredSeconds = 200
 	config.RetryTimes = 3
 	config.UserAgent = userAgent
-	config.MinSliceFileSize = 8 * 1024 * 1024
 	config.DefaultSliceSize = 3 * 1024 * 1024
 	config.Timeout = time.Second * 60 // seconds
 	config.Pool = nil
