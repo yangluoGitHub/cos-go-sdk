@@ -45,13 +45,13 @@ type Client struct {
 	Conn   *Conn
 }
 
-// COS API 返回结果封装
+// Base reponse
 type Response struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 }
 
-// 目录创建操作的返回结果封装
+// 目录创建
 type CreateFolderResponse struct {
 	Response
 	Data struct {
@@ -60,12 +60,12 @@ type CreateFolderResponse struct {
 	} `json:"data"`
 }
 
-// 目录更新操作的返回结果封装
+// 目录更新
 type UpdateFolderResponse struct {
 	Response
 }
 
-// 目录查询操作的返回结果封装
+// 目录查询
 type StatFolderResponse struct {
 	Response
 	Data struct {
@@ -76,12 +76,12 @@ type StatFolderResponse struct {
 	} `json:"data"`
 }
 
-// 目录删除操作的返回结果封装
+// 目录删除
 type DeleteFolderResponse struct {
 	Response
 }
 
-// 目录列举及搜索操作的返回结果封装
+// 目录列举
 type ListFolderResponse struct {
 	Response
 	Data struct {
@@ -102,7 +102,7 @@ type ListFolderResponse struct {
 	} `json:"data"`
 }
 
-// 文件上传操作的返回结果封装
+// 文件上传
 type UploadFileResponse struct {
 	Response
 	Data struct {
@@ -112,7 +112,7 @@ type UploadFileResponse struct {
 	} `json:"data"`
 }
 
-// 文件分片上传操作的返回结果封装
+// 文件分片
 type UploadSliceResponse struct {
 	Response
 	Data struct {
@@ -125,12 +125,12 @@ type UploadSliceResponse struct {
 	} `json:"data"`
 }
 
-// 文件属性更新操作的返回结果封装
+// 文件属性
 type UpdateFileResponse struct {
 	Response
 }
 
-// 文件查询操作的返回结果封装
+// 文件查询
 type StatFileResponse struct {
 	Response
 	Data struct {
@@ -145,7 +145,7 @@ type StatFileResponse struct {
 	} `json:"data"`
 }
 
-// 文件删除操作的返回结果封装
+// 文件删除
 type DeleteFileResponse struct {
 	Response
 }
