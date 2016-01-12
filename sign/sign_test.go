@@ -1,7 +1,3 @@
-// copyright : tencent
-// author : solomonooo
-// github : github.com/tencentyun/go-sdk
-
 package sign
 
 import (

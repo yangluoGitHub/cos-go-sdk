@@ -1,8 +1,3 @@
-// copyright : tencent
-// author : weili
-// github :
-
-// Package Bucket implements go sdk for cos
 package coscloud
 
 import (

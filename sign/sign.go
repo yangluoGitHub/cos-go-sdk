@@ -1,8 +1,3 @@
-// copyright : tencent
-// author : solomonooo
-// github : github.com/tencentyun/go-sdk
-
-// Package sign implements sign for qcloud sdk
 package sign
 
 import (
@@ -12,8 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	// "strconv"
-	// "strings"
 	"time"
 )
 
