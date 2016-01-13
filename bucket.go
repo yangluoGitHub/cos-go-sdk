@@ -685,7 +685,7 @@ func (buc Bucket) Upload(srcPath, dstPath, bizAttr string) (*UploadFileResponse,
 	//file sha1
 	sha, err := getFileSha1(srcPath)
 	if nil != err {
-		fmt.Printf("getFileSha1 error, err=%s", err.Error())
+		// fmt.Printf("getFileSha1 error, err=%s", err.Error())
 		return nil, err
 	}
 
@@ -733,7 +733,7 @@ func (buc Bucket) Upload_slice(srcPath, dstPath, bizAttr string, sliceSize int, 
 
 	filemode, err := os.Stat(srcPath)
 	if nil != err {
-		fmt.Println("os.Stat error", err)
+		// fmt.Println("os.Stat error", err)
 		return nil, err
 	}
 
