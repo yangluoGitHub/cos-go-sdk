@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -245,9 +244,6 @@ func cosUrlEncode(path string) string {
 //获取文件sha1
 //param path string 文件路径
 func getFileSha1(path string) (string, error) {
-	if "" == path {
-		return "", errors.New("invalid srcPath")
-	}
 
 	fi, err := os.Open(path)
 	if nil != err {
@@ -788,9 +784,9 @@ func (buc Bucket) Upload_slice(srcPath, dstPath, bizAttr string, sliceSize int, 
 	if response.Data.SliceSize != 0 {
 		sliceSize = response.Data.SliceSize
 	}
-	if response.Data.Offset != 0 {
-		offset = response.Data.Offset
-	}
+	// if response.Data.Offset != 0 {
+	offset = response.Data.Offset
+	// }
 	if response.Data.Session != "" {
 		session = response.Data.Session
 	}
@@ -843,45 +839,6 @@ func (buc Bucket) upload_data(fileSize int64, sliceSize int, dstPath, srcPath st
 			return nil, err
 		}
 
-		/*data, err := buc.do("POST", dstPath, nil, headers, body, SIGN)
-
-		if nil != err {
-			// fmt.Printf("=========err= %s ================", err.Error())
-			if retry_times < buc.Client.Config.RetryTimes {
-				retry_times++
-				// fmt.Println(retry_times)
-				continue
-
-			} else {
-				return nil, err
-			}
-
-		}
-
-		err = json.Unmarshal(data, response)
-		if nil != err {
-			// fmt.Printf("========Unmarshal err= %s ================", err.Error())
-			if retry_times < buc.Client.Config.RetryTimes {
-				retry_times++
-				// fmt.Println(retry_times)
-				continue
-
-			} else {
-				return nil, err
-			}
-		}
-		if response.Code != 0 {
-			// fmt.Printf("=========response.Code= %d ================", response.Code)
-			if retry_times < buc.Client.Config.RetryTimes {
-				retry_times++
-				continue
-			} else {
-				return nil, fmt.Errorf("%s", response.Message)
-			}
-
-		}*/
-
-		//=====
 		for retry_times < buc.Client.Config.RetryTimes {
 			retry_times++
 			responseData, loopErr = buc.do("POST", dstPath, nil, headers, body, SIGN)
@@ -905,7 +862,6 @@ func (buc Bucket) upload_data(fileSize int64, sliceSize int, dstPath, srcPath st
 			// fmt.Println(loopErr)
 			return nil, loopErr
 		}
-		//=====
 
 		session = response.Data.Session
 		offset += int64(sliceSize)

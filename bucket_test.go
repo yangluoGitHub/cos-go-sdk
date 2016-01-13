@@ -36,6 +36,8 @@ func (s *BucketSuite) SetUpSuite(c *C) {
 
 // Run once after all tests or benchmarks have finished running.
 func (s *BucketSuite) TearDownSuite(c *C) {
+
+	//
 	s.bucket.Client.Config.Pool = x509.NewCertPool()
 
 	_, err := s.bucket.Upload_slice(slice_srcPath, slice_dstPath, "go testcase for cos sdk Upload file slice.", 3*1024*1024, "")
@@ -287,6 +289,7 @@ func (s *BucketSuite) TestUploadSlice(c *C) {
 
 }
 
+// set Timeout
 func (s *BucketSuite) TestUploadSlice2(c *C) {
 
 	s.bucket.Client.Config.Timeout = time.Second
@@ -303,6 +306,40 @@ func (s *BucketSuite) TestUploadSlice2(c *C) {
 	resDelFile, err := s.bucket.Del(slice_dstPath)
 	c.Assert(err, IsNil)
 	c.Assert(resDelFile.Code, Equals, 0)
+
+}
+
+// try to coverage 95%
+func (s *BucketSuite) TestTimeOutForPassCoverAlls(c *C) {
+
+	s.bucket.Client.Config.Timeout = time.Millisecond * 10
+
+	_, err := s.bucket.CreateFolder(folderPath, "create")
+	c.Assert(err, NotNil)
+
+	_, err = s.bucket.DelFolder(folderPath)
+	c.Assert(err, NotNil)
+
+	_, err = s.bucket.UpdateFolder(folderPath, "update")
+	c.Assert(err, NotNil)
+
+	_, err = s.bucket.StatFolder(folderPath)
+	c.Assert(err, NotNil)
+
+	_, err = s.bucket.ListFolder(folderPath, 20, ELISTFILEONLY, Desc, "")
+	c.Assert(err, NotNil)
+
+	_, err = s.bucket.PrefixSearch("/cos-go-sdk", 20, ELISTBOTH, Asc, "")
+	c.Assert(err, NotNil)
+
+	_, err = s.bucket.Upload(srcPath, "/cos-go-sdk/TestUpdateAndStatFile/test.jpg", "go testcase for cos sdk Upload file.")
+	c.Assert(err, NotNil)
+
+	_, err = s.bucket.Update("/cos-go-sdk/TestUpdateAndStatFile/test.jpg", "update")
+	c.Assert(err, NotNil)
+
+	_, err = s.bucket.Stat("/cos-go-sdk/TestUpdateAndStatFile/test.jpg")
+	c.Assert(err, NotNil)
 
 }
 
