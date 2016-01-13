@@ -807,6 +807,8 @@ func (buc Bucket) upload_data(fileSize int64, sliceSize int, dstPath, srcPath st
 
 	boundary := "-------------------------abcdefg1234567"
 	var retry_times uint = 0
+	var loopErr error
+	var responseData []byte
 	for fileSize > offset {
 
 		// fmt.Printf("offset:%d \n", offset)
@@ -841,7 +843,7 @@ func (buc Bucket) upload_data(fileSize int64, sliceSize int, dstPath, srcPath st
 			return nil, err
 		}
 
-		data, err := buc.do("POST", dstPath, nil, headers, body, SIGN)
+		/*data, err := buc.do("POST", dstPath, nil, headers, body, SIGN)
 
 		if nil != err {
 			// fmt.Printf("=========err= %s ================", err.Error())
@@ -877,11 +879,36 @@ func (buc Bucket) upload_data(fileSize int64, sliceSize int, dstPath, srcPath st
 				return nil, fmt.Errorf("%s", response.Message)
 			}
 
+		}*/
+
+		//=====
+		for retry_times < buc.Client.Config.RetryTimes {
+			retry_times++
+			responseData, loopErr = buc.do("POST", dstPath, nil, headers, body, SIGN)
+			if nil != loopErr {
+				// fmt.Println(loopErr)
+				continue
+			}
+			loopErr = json.Unmarshal(responseData, response)
+			if nil != loopErr {
+				continue
+			}
+			if response.Code == 0 {
+				retry_times = 0
+				break
+			}
+
 		}
+
+		if retry_times != 0 {
+			// fmt.Println("errrr-----------------")
+			// fmt.Println(loopErr)
+			return nil, loopErr
+		}
+		//=====
 
 		session = response.Data.Session
 		offset += int64(sliceSize)
-		retry_times = 0
 	}
 
 	return response, nil
