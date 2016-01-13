@@ -1,8 +1,8 @@
 package coscloud
 
 import (
+	"crypto/x509"
 	"fmt"
-	// "math/rand"
 	"testing"
 	"time"
 
@@ -286,6 +286,34 @@ func (s *BucketSuite) TestUploadSlice(c *C) {
 	c.Assert(resDelFile.Code, Equals, 0)
 
 	resUpload, err = s.bucket.Upload_slice("./test/data1.bi", slice_dstPath, "go testcase for cos sdk Upload file slice.", 3*1024*1024, "")
+	c.Assert(err, NotNil)
+
+}
+
+func (s *BucketSuite) TestUploadSlice2(c *C) {
+
+	s.bucket.Client.Config.Timeout = time.Second
+
+	resUpload, err := s.bucket.Upload_slice(slice_srcPath, slice_dstPath, "go testcase for cos sdk Upload file slice.", 3*1024*1024, "")
+	c.Assert(err, NotNil)
+	// fmt.Println(err)
+
+	s.bucket.Client.Config.Timeout = time.Second * 60
+	resUpload, err = s.bucket.Upload_slice(slice_srcPath, slice_dstPath, "go testcase for cos sdk Upload file slice.", 3*1024*1024, "")
+	c.Assert(err, IsNil)
+	c.Assert(resUpload.Code, Equals, 0)
+
+	resDelFile, err := s.bucket.Del(slice_dstPath)
+	c.Assert(err, IsNil)
+	c.Assert(resDelFile.Code, Equals, 0)
+
+}
+
+func (s *BucketSuite) TestHttps(c *C) {
+
+	s.bucket.Client.Config.Pool = x509.NewCertPool()
+
+	_, err := s.bucket.Upload_slice(slice_srcPath, slice_dstPath, "go testcase for cos sdk Upload file slice.", 3*1024*1024, "")
 	c.Assert(err, NotNil)
 
 }
