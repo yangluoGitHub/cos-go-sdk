@@ -36,20 +36,17 @@ func (s *BucketSuite) SetUpSuite(c *C) {
 
 // Run once after all tests or benchmarks have finished running.
 func (s *BucketSuite) TearDownSuite(c *C) {
-	// Delete Objects
-	// lor, err := s.bucket.ListObjects()
-	// c.Assert(err, IsNil)
+	s.bucket.Client.Config.Pool = x509.NewCertPool()
 
-	// for _, object := range lor.Objects {
-	// 	err = s.bucket.DeleteObject(object.Key)
-	// 	c.Assert(err, IsNil)
-	// }
+	_, err := s.bucket.Upload_slice(slice_srcPath, slice_dstPath, "go testcase for cos sdk Upload file slice.", 3*1024*1024, "")
+	c.Assert(err, NotNil)
 
 	fmt.Println("TearDownSuite")
 }
 
 // Run before each test or benchmark starts
 func (s *BucketSuite) SetUpTest(c *C) {
+	s.bucket.Client.Config.Timeout = time.Second * 60
 }
 
 // Run after each test or benchmark runs.
@@ -306,15 +303,6 @@ func (s *BucketSuite) TestUploadSlice2(c *C) {
 	resDelFile, err := s.bucket.Del(slice_dstPath)
 	c.Assert(err, IsNil)
 	c.Assert(resDelFile.Code, Equals, 0)
-
-}
-
-func (s *BucketSuite) TestHttps(c *C) {
-
-	s.bucket.Client.Config.Pool = x509.NewCertPool()
-
-	_, err := s.bucket.Upload_slice(slice_srcPath, slice_dstPath, "go testcase for cos sdk Upload file slice.", 3*1024*1024, "")
-	c.Assert(err, NotNil)
 
 }
 
