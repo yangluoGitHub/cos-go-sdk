@@ -292,7 +292,7 @@ func (s *BucketSuite) TestUploadSlice(c *C) {
 // set Timeout
 func (s *BucketSuite) TestUploadSlice2(c *C) {
 
-	s.bucket.Client.Config.Timeout = time.Second
+	s.bucket.Client.Config.Timeout = time.Second * 2
 
 	resUpload, err := s.bucket.Upload_slice(slice_srcPath, slice_dstPath, "go testcase for cos sdk Upload file slice.", 3*1024*1024, "")
 	c.Assert(err, NotNil)
@@ -339,6 +339,12 @@ func (s *BucketSuite) TestTimeOutForPassCoverAlls(c *C) {
 	c.Assert(err, NotNil)
 
 	_, err = s.bucket.Stat("/cos-go-sdk/TestUpdateAndStatFile/test.jpg")
+	c.Assert(err, NotNil)
+
+	_, err = s.bucket.Del("/cos-go-sdk/TestUpdateAndStatFile/test.jpg")
+	c.Assert(err, NotNil)
+
+	_, err = s.bucket.Upload_slice(slice_srcPath, slice_dstPath, "go testcase for cos sdk Upload file slice.", 2*1024*1024, "session")
 	c.Assert(err, NotNil)
 
 }

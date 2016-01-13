@@ -843,7 +843,6 @@ func (buc Bucket) upload_data(fileSize int64, sliceSize int, dstPath, srcPath st
 			retry_times++
 			responseData, loopErr = buc.do("POST", dstPath, nil, headers, body, SIGN)
 			if nil != loopErr {
-				// fmt.Println(loopErr)
 				continue
 			}
 			loopErr = json.Unmarshal(responseData, response)
@@ -858,8 +857,6 @@ func (buc Bucket) upload_data(fileSize int64, sliceSize int, dstPath, srcPath st
 		}
 
 		if retry_times != 0 {
-			// fmt.Println("errrr-----------------")
-			// fmt.Println(loopErr)
 			return nil, loopErr
 		}
 
