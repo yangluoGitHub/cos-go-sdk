@@ -11,14 +11,13 @@ func main() {
 	secretKey := "kmabDFmmQkV9PGThSmfw8TVtrkmvrNHl"
 	bucketName := "bucket1"
 
+	//new bucket Object
 	bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
-
 	res, err := bucket.ListFolder("/cos-go-sdk/createFolder/test/", 20, coscloud.ELISTBOTH, coscloud.Asc, "")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-
 	fmt.Println("Code:", res.Code,
 		"\nMessage:", res.Message,
 		"\nContext:", res.Data.Context,
@@ -26,7 +25,6 @@ func main() {
 		"\nDirCount:", res.Data.DirCount,
 		"\nFileCount:", res.Data.FileCount,
 	)
-
 	fmt.Println("=================================")
 	for _, info := range res.Data.Infos {
 		fmt.Println("Name:", info.Name,

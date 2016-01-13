@@ -22,7 +22,8 @@ go get github.com/yangluoGitHub/cos-go-sdk
 ### 创建目录
 
 ```go 
-bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
+	//new bucket Object
+	bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
 	res, err := bucket.CreateFolder("/cos-go-sdk/createFolder/test/", "test")
 	if err != nil {
 		fmt.Println(err)
@@ -37,7 +38,8 @@ bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
 ### 创建文件（完整上传）
 
 ```go
-bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
+	//new bucket Object
+	bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
 	res, err := bucket.Upload("../test/test.jpg", "/cos-go-sdk/upload/test.jpg", "upload test")
 	if err != nil {
 		fmt.Println(err)
@@ -53,8 +55,12 @@ bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
 ### 创建文件（分片上传）
 
 ```go
-bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
+	//new bucket Object
+	bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
+	//用户指定分片大小来分片上传
 	res, err := bucket.Upload_slice("../test/data.bin", "/cos-go-sdk/upload_slice/data.bin", "upload_slice test", 3*1024*1024, "")
+	//上传失败，重新上传，不论是否指定session，都可以实现断点续传
+	// res, err := bucket.Upload_slice("../test/data.bin", "/cos-go-sdk/upload_slice/data.bin", "upload_slice test", 3*1024*1024, "48d44422-3188-4c6c-b122-6f780742f125+CpzDLtEHAA==")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -70,7 +76,8 @@ bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
 ### 目录列表
 
 ```go 
-bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
+	//new bucket Object
+	bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
 	res, err := bucket.ListFolder("/cos-go-sdk/createFolder/test/", 20, coscloud.ELISTBOTH, coscloud.Asc, "")
 	if err != nil {
 		fmt.Println(err)
@@ -101,7 +108,8 @@ bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
 ### 前缀搜索
 
 ```go 
-bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
+  	//new bucket Object
+	bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
 	res, err := bucket.PrefixSearch("/cos-go-sdk", 20, coscloud.ELISTBOTH, coscloud.Asc, "")
 	if err != nil {
 		fmt.Println(err)
@@ -132,7 +140,8 @@ bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
 ### 目录信息更新
 
 ```go 
-bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
+	//new bucket Object
+	bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
 	res, err := bucket.UpdateFolder("/cos-go-sdk/createFolder/test/", "update-attr")
 	if err != nil {
 		fmt.Println(err)
@@ -144,7 +153,8 @@ bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
 ### 文件信息更新
 
 ```go 
-bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
+	//new bucket Object
+	bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
 	res, err := bucket.Update("/cos-go-sdk/upload/test.jpg", "update-attr")
 	if err != nil {
 		fmt.Println(err)
@@ -156,7 +166,8 @@ bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
 ### 目录信息查询
 
 ```go 
-bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
+	//new bucket Object
+	bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
 	res, err := bucket.StatFolder("/cos-go-sdk/createFolder/test/")
 	if err != nil {
 		fmt.Println(err)
@@ -173,8 +184,9 @@ bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
 ### 文件信息查询
 
 ```go 
-bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
-	res, err := bucket.Stat("/cos-go-sdk/upload/test")
+	//new bucket Object
+	bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
+	res, err := bucket.Stat("/cos-go-sdk/upload/test.jpg")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -194,7 +206,8 @@ bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
 ### 删除目录
 
 ```go 
-bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
+	//new bucket Object
+	bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
 	res, err := bucket.DelFolder("/cos-go-sdk/createFolder/test/")
 	if err != nil {
 		fmt.Println(err)
@@ -206,8 +219,9 @@ bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
 ### 删除文件
 
 ```go 
-bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
-	res, err := bucket.Del("/cos-go-sdk/upload/test")
+	//new bucket Object
+	bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
+	res, err := bucket.Del("/cos-go-sdk/upload/test.jpg")
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -221,4 +235,4 @@ bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
 
 ##项目文档
 
-更多文档请查看 docs 目录
+针对每个 API 接口需要有独立的接口文档，请查看 docs 目录。

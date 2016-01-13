@@ -13,13 +13,11 @@ func main() {
 	bucketName := "bucket1"
 
 	bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
-
 	res, err := bucket.CreateFolder("/cos-go-sdk/createFolder/test/", "test")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-
 	fmt.Println("Code:", res.Code,
 		"\nMessage:", res.Message,
 		"\nCtime:", res.Data.Ctime,
