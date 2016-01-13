@@ -30,6 +30,12 @@ const (
 	ELISTFILEONLY = "eListFileOnly"
 )
 
+//listFolder func order 取值
+const (
+	Asc  int = iota // 正序
+	Desc            // 反序
+)
+
 type Bucket struct {
 	BucketName string
 	Client     Client
@@ -269,7 +275,7 @@ func getFileSha1(path string) (string, error) {
 
 //获取文件sha1
 //param bytes []byte
-func getbytesSha1(bytes []byte) (string, error) {
+/*func getbytesSha1(bytes []byte) (string, error) {
 
 	h := sha1.New()
 	_, erro := h.Write(bytes)
@@ -280,7 +286,7 @@ func getbytesSha1(bytes []byte) (string, error) {
 	hmacStr := fmt.Sprintf("%x", h.Sum(nil))
 	return hmacStr, nil
 
-}
+}*/
 
 //获取文件内容
 func getFileContents(filePath string) ([]byte, error) {

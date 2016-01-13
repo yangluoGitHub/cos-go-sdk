@@ -110,31 +110,31 @@ func (s *BucketSuite) TestListFolder(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(res.Code, Equals, 0)
 
-	resList, err := s.bucket.ListFolder(folderPath, 20, ELISTBOTH, 0, "")
+	resList, err := s.bucket.ListFolder(folderPath, 20, ELISTBOTH, Asc, "")
 	c.Assert(err, IsNil)
 	c.Assert(resList.Code, Equals, 0)
 
-	resList, err = s.bucket.ListFolder("/", 20, ELISTBOTH, 0, "")
+	resList, err = s.bucket.ListFolder("/", 20, ELISTBOTH, Asc, "")
 	c.Assert(err, IsNil)
 	c.Assert(resList.Code, Equals, 0)
 
-	resList, err = s.bucket.ListFolder(folderPath, 20, ELISTDIRONLY, 0, "")
+	resList, err = s.bucket.ListFolder(folderPath, 20, ELISTDIRONLY, Asc, "")
 	c.Assert(err, IsNil)
 	c.Assert(resList.Code, Equals, 0)
 
-	resList, err = s.bucket.ListFolder(folderPath, 20, ELISTDIRONLY, 1, "")
+	resList, err = s.bucket.ListFolder(folderPath, 20, ELISTDIRONLY, Desc, "")
 	c.Assert(err, IsNil)
 	c.Assert(resList.Code, Equals, 0)
 
-	resList, err = s.bucket.ListFolder(folderPath, 20, ELISTFILEONLY, 0, "")
+	resList, err = s.bucket.ListFolder(folderPath, 20, ELISTFILEONLY, Asc, "")
 	c.Assert(err, IsNil)
 	c.Assert(resList.Code, Equals, 0)
 
-	resList, err = s.bucket.ListFolder(folderPath, 20, ELISTFILEONLY, 1, "")
+	resList, err = s.bucket.ListFolder(folderPath, 20, ELISTFILEONLY, Desc, "")
 	c.Assert(err, IsNil)
 	c.Assert(resList.Code, Equals, 0)
 
-	resSearch, err := s.bucket.PrefixSearch("/cos-go-sdk/u", 20, ELISTBOTH, 0, "")
+	resSearch, err := s.bucket.PrefixSearch("/cos-go-sdk/u", 20, ELISTBOTH, Asc, "")
 	c.Assert(err, IsNil)
 	c.Assert(resSearch.Code, Equals, 0)
 

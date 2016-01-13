@@ -10,22 +10,10 @@ import (
 	"time"
 )
 
-const HMAC_LENGTH = 20
-
 func signBase(appid uint, secretId string, secretKey string, bucket string, now int64, rdm int32, expireTime uint, fileid string) (string, error) {
 	if "" == secretId || "" == secretKey {
 		return "", errors.New("invalid params, secret id or key is empty")
 	}
-
-	// now := time.Now().Unix()
-	// // r := rand.New(rand.NewSource(time.Now().Unix()))
-	// r := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	// rdm := r.Int31()
-	// expireTime := expire
-	// if 0 != expireTime {
-	// 	expireTime += uint(now)
-	// }
 
 	var plainStr string
 	plainStr = fmt.Sprintf("a=%d&b=%s&k=%s&e=%d&t=%d&r=%d&f=%s",
@@ -50,21 +38,25 @@ func signBase(appid uint, secretId string, secretKey string, bucket string, now 
 
 // gen the sign with a expire time.
 func AppSign(appid uint, secretId string, secretKey string, bucket string, expire uint) (string, error) {
-	now := time.Now().Unix()
-	// r := rand.New(rand.NewSource(time.Now().Unix()))
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	rdm := r.Int31()
-	expireTime := expire + uint(now)
+	now, rdm, expireTime := genBaseParamsToSign(expire)
 	return signBase(appid, secretId, secretKey, bucket, now, rdm, expireTime, "")
 }
 
 // gen the sign binding a fileid
 func AppSignOnce(appid uint, secretId string, secretKey string, bucket string, fileid string) (string, error) {
+	now, rdm, expireTime := genBaseParamsToSign(0)
+	return signBase(appid, secretId, secretKey, bucket, now, rdm, expireTime, fileid)
+}
+
+func genBaseParamsToSign(expire uint) (int64, int32, uint) {
 	now := time.Now().Unix()
 	// r := rand.New(rand.NewSource(time.Now().Unix()))
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	rdm := r.Int31()
-	return signBase(appid, secretId, secretKey, bucket, now, rdm, 0, fileid)
+	expireTime := expire
+	if 0 != expireTime {
+		expireTime += uint(now)
+	}
+	return now, rdm, expireTime
 }

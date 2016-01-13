@@ -13,7 +13,7 @@ func main() {
 
 	bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
 
-	res, err := bucket.ListFolder("/cos-go-sdk/createFolder/test/", 20, coscloud.ELISTBOTH, 0, "")
+	res, err := bucket.ListFolder("/cos-go-sdk/createFolder/test/", 20, coscloud.ELISTBOTH, coscloud.Asc, "")
 	if err != nil {
 		fmt.Println(err)
 		return
