@@ -2,7 +2,6 @@ package coscloud
 
 import (
 	"crypto/tls"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -37,7 +36,6 @@ func (conn Conn) doRequest(method, urlStr string, headers map[string]string, bod
 	req, err := http.NewRequest(method, urlStr, body)
 
 	if nil != err {
-		fmt.Printf("http.NewRequest error, err=%s", err.Error())
 		return
 	}
 
@@ -75,7 +73,6 @@ func (conn Conn) doRequest(method, urlStr string, headers map[string]string, bod
 	}
 	resp, err := client.Do(req)
 	if nil != err {
-		fmt.Printf("http error, err=%s\n", err.Error())
 		return
 	}
 	defer resp.Body.Close()

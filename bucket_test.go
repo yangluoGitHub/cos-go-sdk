@@ -199,6 +199,10 @@ func (s *BucketSuite) TestListFolder(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(resSearch.Code, Equals, 0)
 
+	resSearch, err = s.bucket.PrefixSearch("cos-go-sdk", 20, ELISTBOTH, Asc, "")
+	c.Assert(err, IsNil)
+	c.Assert(resSearch.Code, Equals, 0)
+
 	resDel, err := s.bucket.DelFolder(folderPath + "/01")
 	c.Assert(err, IsNil)
 	c.Assert(resDel.Code, Equals, 0)
@@ -264,15 +268,18 @@ func (s *BucketSuite) TestUpdateAndStatFile(c *C) {
 }
 
 func (s *BucketSuite) TestUploadSlice(c *C) {
-	fmt.Println(folderPath)
 
 	resUpload, err := s.bucket.Upload_slice(slice_srcPath, slice_dstPath, "go testcase for cos sdk Upload file slice.", 3*1024*1024, "")
 	c.Assert(err, IsNil)
 	c.Assert(resUpload.Code, Equals, 0)
 
-	resUpload, err = s.bucket.Upload_slice(slice_srcPath, slice_dstPath, "go testcase for cos sdk Upload file slice.", 3*1024*1024, "")
+	resUpload, err = s.bucket.Upload_slice(slice_srcPath, slice_dstPath, "go testcase for cos sdk Upload file slice.", 4*1024*1024, "")
 	c.Assert(err, IsNil)
 	c.Assert(resUpload.Code, Equals, 0)
+
+	//wrong session
+	resUpload, err = s.bucket.Upload_slice(slice_srcPath, slice_dstPath, "go testcase for cos sdk Upload file slice.", 2*1024*1024, "session")
+	c.Assert(err, NotNil)
 
 	resDelFile, err := s.bucket.Del(slice_dstPath)
 	c.Assert(err, IsNil)

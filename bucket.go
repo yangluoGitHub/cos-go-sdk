@@ -187,10 +187,6 @@ func New(appid uint, secretId, secretKey, bucketName string) (*Bucket, error) {
 */
 func buildBucketUrl(endpoint string, appid uint, bucketName string) string {
 
-	if match, _ := regexp.MatchString(`\/$`, endpoint); !match {
-		endpoint += "/"
-	}
-
 	return fmt.Sprintf("%s%d/%s", endpoint, appid, bucketName)
 
 }
@@ -201,9 +197,7 @@ type Params map[string]string
 // Encode encodes the Params into ``URL encoded'' form
 // ("bar=baz&foo=quux") sorted by key.
 func (p Params) encode() string {
-	if p == nil {
-		return ""
-	}
+
 	var buf bytes.Buffer
 	keys := make([]string, 0, len(p))
 	for k := range p {
@@ -252,8 +246,7 @@ func cosUrlEncode(path string) string {
 //param path string 文件路径
 func getFileSha1(path string) (string, error) {
 	if "" == path {
-		err := errors.New("invalid srcPath")
-		return "", err
+		return "", errors.New("invalid srcPath")
 	}
 
 	fi, err := os.Open(path)
@@ -318,7 +311,6 @@ func getFileSliceCntents(srcPath string, offset int64, sliceSize int) ([]byte, e
 	buf := make([]byte, sliceSize)
 	n, err := sr.Read(buf)
 	if err != nil {
-		fmt.Println(err)
 		return nil, err
 	}
 	return buf[:n], nil
@@ -328,7 +320,7 @@ func getFileSliceCntents(srcPath string, offset int64, sliceSize int) ([]byte, e
 func jsonReqData(reqData map[string]string) (io.Reader, map[string]string, error) {
 	d, err := json.Marshal(reqData)
 	if nil != err {
-		fmt.Printf("json.Marshal error, err=%s", err.Error())
+		// fmt.Printf("json.Marshal error, err=%s", err.Error())
 		return nil, nil, err
 	}
 	body := bytes.NewBuffer([]byte(d))
@@ -427,7 +419,7 @@ func (buc Bucket) do(method, path string, params Params,
 	if signType == SIGN_ONCE {
 		sign, err := buc.signOnce(path)
 		if nil != err {
-			fmt.Printf("SignOnce error, err=%s", err.Error())
+			// fmt.Printf("SignOnce error, err=%s", err.Error())
 			return nil, err
 		}
 		signHead = sign
@@ -435,7 +427,7 @@ func (buc Bucket) do(method, path string, params Params,
 	} else {
 		sign, err := buc.sign(buc.Client.Config.SignExpiredSeconds)
 		if nil != err {
-			fmt.Printf("Sign error, err=%s", err.Error())
+			// fmt.Printf("Sign error, err=%s", err.Error())
 			return nil, err
 		}
 		signHead = sign
@@ -742,7 +734,7 @@ func (buc Bucket) Upload_slice(srcPath, dstPath, bizAttr string, sliceSize int, 
 	//file sha1
 	sha1, err := getFileSha1(srcPath)
 	if nil != err {
-		fmt.Printf("getFileSha1 error, err=%s", err.Error())
+		// fmt.Printf("getFileSha1 error, err=%s", err.Error())
 		return nil, err
 	}
 
@@ -825,7 +817,7 @@ func (buc Bucket) upload_data(fileSize int64, sliceSize int, dstPath, srcPath st
 
 		filecontent, err := getFileSliceCntents(srcPath, offset, sliceSize)
 		if nil != err {
-			fmt.Printf("[upload_data]:getFileSliceCntents error, err=%s", err.Error())
+			// fmt.Printf("[upload_data]:getFileSliceCntents error, err=%s", err.Error())
 			return nil, err
 		}
 
@@ -852,10 +844,10 @@ func (buc Bucket) upload_data(fileSize int64, sliceSize int, dstPath, srcPath st
 		data, err := buc.do("POST", dstPath, nil, headers, body, SIGN)
 
 		if nil != err {
-			fmt.Printf("=========err= %s ================", err.Error())
+			// fmt.Printf("=========err= %s ================", err.Error())
 			if retry_times < buc.Client.Config.RetryTimes {
 				retry_times++
-				fmt.Println(retry_times)
+				// fmt.Println(retry_times)
 				continue
 
 			} else {
@@ -866,10 +858,10 @@ func (buc Bucket) upload_data(fileSize int64, sliceSize int, dstPath, srcPath st
 
 		err = json.Unmarshal(data, response)
 		if nil != err {
-			fmt.Printf("========Unmarshal err= %s ================", err.Error())
+			// fmt.Printf("========Unmarshal err= %s ================", err.Error())
 			if retry_times < buc.Client.Config.RetryTimes {
 				retry_times++
-				fmt.Println(retry_times)
+				// fmt.Println(retry_times)
 				continue
 
 			} else {
@@ -877,7 +869,7 @@ func (buc Bucket) upload_data(fileSize int64, sliceSize int, dstPath, srcPath st
 			}
 		}
 		if response.Code != 0 {
-			fmt.Printf("=========response.Code= %d ================", response.Code)
+			// fmt.Printf("=========response.Code= %d ================", response.Code)
 			if retry_times < buc.Client.Config.RetryTimes {
 				retry_times++
 				continue
