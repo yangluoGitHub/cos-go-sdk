@@ -295,7 +295,7 @@ func getFileContents(filePath string) ([]byte, error) {
 }
 
 //获取文件分片数据
-func getFileSliceCntents(srcPath string, offset int64, sliceSize int) ([]byte, error) {
+/*func getFileSliceCntents(srcPath string, offset int64, sliceSize int) ([]byte, error) {
 
 	file, err := os.Open(srcPath)
 	if err != nil {
@@ -306,11 +306,11 @@ func getFileSliceCntents(srcPath string, offset int64, sliceSize int) ([]byte, e
 	sr := io.NewSectionReader(file, offset, int64(sliceSize))
 	buf := make([]byte, sliceSize)
 	n, err := sr.Read(buf)
-	if err != nil {
+	if sliceSize != n || err != nil {
 		return nil, err
 	}
 	return buf[:n], nil
-}
+}*/
 
 //post 请求数据json编码，返回请求body， headers
 func jsonReqData(reqData map[string]string) (io.Reader, map[string]string, error) {
@@ -717,6 +717,35 @@ func (buc Bucket) Upload(srcPath, dstPath, bizAttr string) (*UploadFileResponse,
 */
 func (buc Bucket) Upload_slice(srcPath, dstPath, bizAttr string, sliceSize int, session string) (*UploadSliceResponse, error) {
 
+	response, err := buc.upload_slice_prepare(srcPath, dstPath, bizAttr, sliceSize, session)
+	if nil != err {
+		return nil, err
+	}
+
+	if response.Code != 0 {
+		return nil, fmt.Errorf("%s", response.Message)
+	}
+
+	if len(response.Data.Url) != 0 { // 秒传命中
+		return response, nil
+	}
+
+	var offset int64
+	if response.Data.SliceSize != 0 {
+		sliceSize = response.Data.SliceSize
+	}
+	// if response.Data.Offset != 0 {
+	offset = response.Data.Offset
+	// }
+	if response.Data.Session != "" {
+		session = response.Data.Session
+	}
+
+	return buc.upload_data(sliceSize, dstPath, srcPath, offset, session)
+
+}
+
+func (buc Bucket) upload_slice_prepare(srcPath, dstPath, bizAttr string, sliceSize int, session string) (*UploadSliceResponse, error) {
 	response := &UploadSliceResponse{}
 
 	filemode, err := os.Stat(srcPath)
@@ -772,31 +801,11 @@ func (buc Bucket) Upload_slice(srcPath, dstPath, bizAttr string, sliceSize int, 
 		return nil, err
 	}
 
-	if response.Code != 0 {
-		return nil, fmt.Errorf("%s", response.Message)
-	}
-
-	if len(response.Data.Url) != 0 { // 秒传命中
-		return response, nil
-	}
-
-	var offset int64
-	if response.Data.SliceSize != 0 {
-		sliceSize = response.Data.SliceSize
-	}
-	// if response.Data.Offset != 0 {
-	offset = response.Data.Offset
-	// }
-	if response.Data.Session != "" {
-		session = response.Data.Session
-	}
-
-	return buc.upload_data(fileSize, sliceSize, dstPath, srcPath, offset, session)
-
+	return response, nil
 }
 
 //Private
-func (buc Bucket) upload_data(fileSize int64, sliceSize int, dstPath, srcPath string,
+func (buc Bucket) upload_data(sliceSize int, dstPath, srcPath string,
 	offset int64, session string) (*UploadSliceResponse, error) {
 
 	response := &UploadSliceResponse{}
@@ -805,19 +814,31 @@ func (buc Bucket) upload_data(fileSize int64, sliceSize int, dstPath, srcPath st
 	var retry_times uint = 0
 	var loopErr error
 	var responseData []byte
+
+	filemode, err := os.Stat(srcPath)
+	if nil != err {
+		return nil, err
+	}
+
+	fileSize := filemode.Size()
+
+	file, err := os.Open(srcPath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	filecontent := make([]byte, sliceSize)
+
 	for fileSize > offset {
 
-		// fmt.Printf("offset:%d \n", offset)
+		file.Seek(offset, 0)
 
 		if (offset + int64(sliceSize)) > fileSize {
 			sliceSize = int(fileSize - offset)
+			filecontent = make([]byte, sliceSize)
 		}
 
-		filecontent, err := getFileSliceCntents(srcPath, offset, sliceSize)
-		if nil != err {
-			// fmt.Printf("[upload_data]:getFileSliceCntents error, err=%s", err.Error())
-			return nil, err
-		}
+		file.Read(filecontent)
 
 		//file sha1
 		// sha, err1 := getbytesSha1(filecontent)
@@ -839,21 +860,26 @@ func (buc Bucket) upload_data(fileSize int64, sliceSize int, dstPath, srcPath st
 			return nil, err
 		}
 
-		for retry_times < buc.Client.Config.RetryTimes {
+		if retry_times < buc.Client.Config.RetryTimes {
 			retry_times++
+
 			responseData, loopErr = buc.do("POST", dstPath, nil, headers, body, SIGN)
 			if nil != loopErr {
+				// fmt.Println(loopErr)
 				continue
 			}
+
 			loopErr = json.Unmarshal(responseData, response)
 			if nil != loopErr {
 				continue
 			}
-			if response.Code == 0 {
-				retry_times = 0
-				break
+
+			fmt.Println(response.Code)
+			if response.Code != 0 {
+				continue
 			}
 
+			retry_times = 0
 		}
 
 		if retry_times != 0 {

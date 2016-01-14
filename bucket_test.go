@@ -123,11 +123,11 @@ func (s *BucketSuite) TestCreateAndDelFolder(c *C) {
 	c.Assert(err, IsNil)
 	c.Assert(resDel.Code, Equals, 0)
 
-	res, err = s.bucket.CreateFolder("/cos-go-sdk1/createFolder1/是滴ID我好滴/", "create")
+	res, err = s.bucket.CreateFolder("/cos-go-sdk/createFolder1/是滴ID我好滴/", "create")
 	c.Assert(err, IsNil)
 	c.Assert(res.Code, Equals, 0)
 
-	resDel, err = s.bucket.DelFolder("/cos-go-sdk1/createFolder1/是滴ID我好滴/")
+	resDel, err = s.bucket.DelFolder("/cos-go-sdk/createFolder1/是滴ID我好滴/")
 	c.Assert(err, IsNil)
 	c.Assert(resDel.Code, Equals, 0)
 
