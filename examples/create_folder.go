@@ -12,6 +12,7 @@ func main() {
 	secretKey := "kmabDFmmQkV9PGThSmfw8TVtrkmvrNHl"
 	bucketName := "bucket1"
 
+	//new bucket Object
 	bucket, _ := coscloud.New(appId, secretId, secretKey, bucketName)
 	res, err := bucket.CreateFolder("/cos-go-sdk/createFolder/test/", "test")
 	if err != nil {

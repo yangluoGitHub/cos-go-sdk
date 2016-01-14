@@ -413,7 +413,7 @@ func (buc Bucket) do(method, path string, params Params,
 	path = cosUrlEncode(path)
 	var signHead string
 	if signType == SIGN_ONCE {
-		sign, err := buc.signOnce(path)
+		sign, err := buc.SignOnce(path)
 		if nil != err {
 			// fmt.Printf("SignOnce error, err=%s", err.Error())
 			return nil, err
@@ -421,7 +421,7 @@ func (buc Bucket) do(method, path string, params Params,
 		signHead = sign
 
 	} else {
-		sign, err := buc.sign(buc.Client.Config.SignExpiredSeconds)
+		sign, err := buc.Sign(buc.Client.Config.SignExpiredSeconds)
 		if nil != err {
 			// fmt.Printf("Sign error, err=%s", err.Error())
 			return nil, err
@@ -869,13 +869,13 @@ func (buc Bucket) upload_data(fileSize int64, sliceSize int, dstPath, srcPath st
 
 // 多次有效签名
 // @param  uint  expire   签名过期时间，单位秒
-func (buc Bucket) sign(expire uint) (string, error) {
+func (buc Bucket) Sign(expire uint) (string, error) {
 	return sign.AppSign(buc.Client.Config.Appid, buc.Client.Config.SecretId, buc.Client.Config.SecretKey, buc.BucketName, expire)
 }
 
 //单次有效签名
 // @param  string  path   目录/文件路径
-func (buc Bucket) signOnce(path string) (string, error) {
+func (buc Bucket) SignOnce(path string) (string, error) {
 	fileId := fmt.Sprintf("/%d/%s%s", buc.Client.Config.Appid, buc.BucketName, path)
 	return sign.AppSignOnce(buc.Client.Config.Appid, buc.Client.Config.SecretId, buc.Client.Config.SecretKey, buc.BucketName, fileId)
 }
