@@ -12,6 +12,8 @@
 ```bash
 go get github.com/yangluoGitHub/cos-go-sdk
 ```
+##https支持
+- 修改config.go中Endpoint值为：[https://web.file.myqcloud.com/files/v1/](https://web.file.myqcloud.com/files/v1/)
 
 ##API 文档
 [![GoDoc](https://godoc.org/github.com/yangluoGitHub/cos-go-sdk?status.svg)](https://godoc.org/github.com/yangluoGitHub/cos-go-sdk)
